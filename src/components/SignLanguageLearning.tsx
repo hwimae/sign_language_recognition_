@@ -16,7 +16,7 @@ const SignLanguageLearning: React.FC<Props> = ({
   lessons
 }) => {
   const [currentLevel, setCurrentLevel] = useState(1);
-  const [selectedChapterIndex, setSelectedChapterIndex] = useState(initialChapterIndex);
+  const [selectedChapterIndex, setSelectedChapterIndex] = useState<number | null>(initialChapterIndex);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   
@@ -30,7 +30,7 @@ const SignLanguageLearning: React.FC<Props> = ({
   
   const chapterLessons = selectedLessonId && selectedLesson
     ? [selectedLesson] 
-    : mutableChapters[selectedChapterIndex]?.lessonList.map(item => {
+    : mutableChapters[selectedChapterIndex || 0]?.lessonList.map(item => {
         return lessons.find(lesson => lesson.id === item.id);
       }).filter((lesson): lesson is Lesson => lesson !== undefined);
 
@@ -130,6 +130,10 @@ const SignLanguageLearning: React.FC<Props> = ({
     }
   };
 
+  const handleChapterSelect = (index: number | null) => {
+    setSelectedChapterIndex(index);
+  };
+
   return (
     <>
       <Sidebar 
@@ -142,14 +146,12 @@ const SignLanguageLearning: React.FC<Props> = ({
         <LessonLayout
           lessons={chapterLessons}
           onComplete={handleLessonComplete}
-          levelIndex={currentLevel}
-          chapterIndex={selectedChapterIndex}
           onLessonCompleted={handleLessonCompleted}
         />
       ) : (
         <ChapterList
           chapters={mutableChapters}
-          onSelect={setSelectedChapterIndex}
+          onSelect={handleChapterSelect}
           onLessonSelect={handleLessonSelect}
         />
       )}

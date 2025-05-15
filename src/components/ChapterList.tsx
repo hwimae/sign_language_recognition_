@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { Chapter } from '../types';
 import { CheckCircle, Lock, ChevronLeft, ChevronRight } from 'react-feather';
 
 interface Props {
   chapters: Chapter[];
-  onSelect: (chapterIndex: number) => void;
+  onSelect: (chapterIndex: number | null) => void;
   onLessonSelect: (lessonId: string) => void;
 }
 
@@ -13,41 +13,24 @@ const ChapterList: React.FC<Props> = ({ chapters, onSelect, onLessonSelect }) =>
   const [currentPage, setCurrentPage] = useState<number>(1);
   
   const LESSONS_PER_PAGE = 5;
-
-  // Auto-open the first chapter with unlocked lessons on initial render
-  useEffect(() => {
-    if (openChapterIndex === null && chapters.length > 0) {
-      // Find first chapter with unlocked lessons
-      const firstUnlockedChapterIndex = chapters.findIndex(
-        chapter => chapter.lessonList.some(lesson => !lesson.locked)
-      );
-      
-      if (firstUnlockedChapterIndex !== -1) {
-        setOpenChapterIndex(firstUnlockedChapterIndex);
-        onSelect(firstUnlockedChapterIndex);
-      } else {
-        // If no unlocked lessons found, just open the first chapter
-        setOpenChapterIndex(0);
-        onSelect(0);
-      }
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const MAX_LESSONS_PER_CHAPTER = 10;
 
   const toggleChapter = (index: number) => {
     if (openChapterIndex === index) {
       setOpenChapterIndex(null);
+      onSelect(null); 
     } else {
       setOpenChapterIndex(index);
-      setCurrentPage(1); 
+      setCurrentPage(1);
+      onSelect(index); 
     }
-    onSelect(index); 
   };
 
   const handleNextPage = () => {
     if (openChapterIndex === null) return;
     
     const chapter = chapters[openChapterIndex];
-    const totalPages = Math.ceil(chapter.lessonList.length / LESSONS_PER_PAGE);
+    const totalPages = Math.ceil(Math.min(chapter.lessonList.length, MAX_LESSONS_PER_CHAPTER) / LESSONS_PER_PAGE);
     
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -61,9 +44,10 @@ const ChapterList: React.FC<Props> = ({ chapters, onSelect, onLessonSelect }) =>
   };
 
   const getCurrentPageLessons = (chapter: Chapter) => {
+    const visibleLessons = chapter.lessonList.slice(0, MAX_LESSONS_PER_CHAPTER);
     const startIdx = (currentPage - 1) * LESSONS_PER_PAGE;
     const endIdx = startIdx + LESSONS_PER_PAGE;
-    return chapter.lessonList.slice(startIdx, endIdx);
+    return visibleLessons.slice(startIdx, endIdx);
   };
 
   const getChapterProgress = (chapter: Chapter) => {
@@ -131,10 +115,10 @@ const ChapterList: React.FC<Props> = ({ chapters, onSelect, onLessonSelect }) =>
                 );
               })}
               
-              {chapter.lessonList.length > LESSONS_PER_PAGE && (
+              {chapter.lessonList.length > MAX_LESSONS_PER_CHAPTER && (
                 <div className="flex items-center justify-between mt-4 pt-2 border-t border-gray-200">
                   <div className="text-sm text-gray-500">
-                    Trang {currentPage} / {Math.ceil(chapter.lessonList.length / LESSONS_PER_PAGE)}
+                    Trang {currentPage} / {Math.ceil(Math.min(chapter.lessonList.length, MAX_LESSONS_PER_CHAPTER) / LESSONS_PER_PAGE)}
                   </div>
                   <div className="flex space-x-2">
                     <button
@@ -148,9 +132,9 @@ const ChapterList: React.FC<Props> = ({ chapters, onSelect, onLessonSelect }) =>
                     </button>
                     <button
                       onClick={handleNextPage}
-                      disabled={currentPage >= Math.ceil(chapter.lessonList.length / LESSONS_PER_PAGE)}
+                      disabled={currentPage >= Math.ceil(Math.min(chapter.lessonList.length, MAX_LESSONS_PER_CHAPTER) / LESSONS_PER_PAGE)}
                       className={`p-1 rounded ${
-                        currentPage >= Math.ceil(chapter.lessonList.length / LESSONS_PER_PAGE)
+                        currentPage >= Math.ceil(Math.min(chapter.lessonList.length, MAX_LESSONS_PER_CHAPTER) / LESSONS_PER_PAGE)
                           ? 'text-gray-300 cursor-not-allowed'
                           : 'text-teal-600 hover:bg-teal-50'
                       }`}

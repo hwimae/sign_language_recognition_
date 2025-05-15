@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import ChapterList from './components/ChapterList';
 import LessonLayout from './components/LessonLayout';
-import { levels, getUnlockedLessons } from './data/levels';
+import { levels, getUnlockedLessons, completeLesson, getLessonById } from './data/levels';
 
 const App: React.FC = () => {
   const [currentLevel, setCurrentLevel] = useState(1);
@@ -11,7 +11,7 @@ const App: React.FC = () => {
 
   const levelData = levels.find((l) => l.level === currentLevel);
   
-  const handleChapterSelect = (chapterIndex: number) => {
+  const handleChapterSelect = (chapterIndex: number | null) => {
     setCurrentChapter(chapterIndex);
   };
   
@@ -21,6 +21,14 @@ const App: React.FC = () => {
   
   const handleLessonSelect = (lessonId: string) => {
     setActiveLessonId(lessonId);
+  };
+
+  const handleLessonCompleted = (lessonId: string) => {
+    const lessonInfo = getLessonById(lessonId);
+    if (lessonInfo) {
+      const { levelIndex, chapterIndex, lessonIndex } = lessonInfo;
+      completeLesson(levelIndex, chapterIndex, lessonIndex);
+    }
   };
 
   return (
@@ -36,8 +44,7 @@ const App: React.FC = () => {
           lessons={getUnlockedLessons(currentLevel - 1, currentChapter)}
           initialLessonIndex={getUnlockedLessons(currentLevel - 1, currentChapter).findIndex(l => l.id === activeLessonId)}
           onComplete={handleLessonComplete}
-          levelIndex={currentLevel - 1}
-          chapterIndex={currentChapter}
+          onLessonCompleted={handleLessonCompleted}
         />
       ) : (
         <ChapterList 

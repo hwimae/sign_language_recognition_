@@ -30,9 +30,9 @@ interface LessonLayoutProps {
   lessons: Lesson[];
   initialLessonIndex?: number;
   onComplete: () => void;
-  levelIndex: number;
-  chapterIndex: number;
-  onLessonCompleted?: (lessonId: string) => void; // Callback for lesson completion
+  onLessonCompleted?: (lessonId: string) => void; 
+  onMoveToNextLesson?: (currentLessonId: string) => void; 
+  currentLessonId?: string; 
 }
 
 const LessonLayout: React.FC<LessonLayoutProps> = ({
@@ -40,6 +40,8 @@ const LessonLayout: React.FC<LessonLayoutProps> = ({
   initialLessonIndex = 0,
   onComplete,
   onLessonCompleted,
+  onMoveToNextLesson,
+  currentLessonId,
 }) => {
   const [currentLessonIndex, setCurrentLessonIndex] = useState(initialLessonIndex);
   const [progress, setProgress] = useState(0);
@@ -65,26 +67,28 @@ const LessonLayout: React.FC<LessonLayoutProps> = ({
   }, [currentLessonIndex]);
 
   useEffect(() => {
-    if (progress >= 100 && !lessonCompleted) {
+    if (progress >= 100 && !lessonCompleted && currentLesson) {
       setLessonCompleted(true);
-      if (onLessonCompleted && currentLesson) {
+      if (onLessonCompleted) {
         onLessonCompleted(currentLesson.id);
       }
     }
   }, [progress, lessonCompleted, currentLesson, onLessonCompleted]);
 
   const handleNext = () => {
-  if (lessonCompleted) {
-    if (currentLessonIndex < lessons.length - 1) {
-      setCurrentLessonIndex(currentLessonIndex + 1);
-      setProgress(0);
-      setCustomVideoUrl(null);
-      setLessonCompleted(false);
-    } else {
-      onComplete();
+    if (lessonCompleted) {
+      if (currentLessonIndex < lessons.length - 1) {
+        setCurrentLessonIndex(currentLessonIndex + 1);
+        setProgress(0);
+        setCustomVideoUrl(null);
+        setLessonCompleted(false);
+      } else if (onMoveToNextLesson && currentLessonId) {
+        onMoveToNextLesson(currentLessonId);
+      } else {
+        onComplete();
+      }
     }
-  }
-};
+  };
 
   const handlePrevious = () => {
     if (currentLessonIndex > 0) {
@@ -151,7 +155,7 @@ const LessonLayout: React.FC<LessonLayoutProps> = ({
           progress={progress}
           onNext={handleNext}
           onPrevious={handlePrevious}
-          hasNextLesson={lessonCompleted && currentLessonIndex < lessons.length - 1}
+          hasNextLesson={currentLessonIndex < lessons.length - 1}
           hasPreviousLesson={currentLessonIndex > 0}
           lessonCompleted={lessonCompleted}
         />

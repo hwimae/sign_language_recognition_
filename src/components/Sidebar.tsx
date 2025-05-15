@@ -17,7 +17,7 @@ const Sidebar: React.FC<Props> = ({ currentLevel, onSelect, unlockedLevels }) =>
         return (
           <button
             key={level}
-            className={`w-full text-left px-4 py-2 ${
+            className={`w-full text-left px-4 py-3 ${
               level === currentLevel ? 'bg-teal-700 text-white' : ''
             } ${!isUnlocked ? 'cursor-not-allowed text-gray-400' : 'hover:bg-teal-100'}`}
             onClick={() => isUnlocked && onSelect(level)}

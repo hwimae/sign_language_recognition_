@@ -5,26 +5,37 @@ const allSignData = wlaslData;
 
 const allGlosses = allSignData.map(item => item.gloss);
 
+const allChapters = createChaptersFromGlosses(allGlosses);
+
 export const levels: Level[] = [
   {
     level: 1,
     title: "Level 1",
     unlocked: true,
-    chapters: createChaptersFromGlosses(allGlosses)
+    chapters: allChapters.slice(0, 5) 
+  },
+  {
+    level: 2,
+    title: "Level 2",
+    unlocked: true,
+    chapters: allChapters.slice(5, 10) 
   }
 ];
 
 function createChaptersFromGlosses(glosses: string[]): Chapter[] {
-  const numChapters = Math.min(5, Math.ceil(glosses.length / 5));
-  const glossesPerChapter = Math.ceil(glosses.length / numChapters);
+  const MAX_LESSONS_PER_CHAPTER = 10;
+  const numChapters = Math.ceil(glosses.length / MAX_LESSONS_PER_CHAPTER);
   
   const chapters: Chapter[] = [];
   
   for (let i = 0; i < numChapters; i++) {
-    const startIdx = i * glossesPerChapter;
-    const endIdx = Math.min((i + 1) * glossesPerChapter, glosses.length);
+    const startIdx = i * MAX_LESSONS_PER_CHAPTER;
+    const endIdx = Math.min((i + 1) * MAX_LESSONS_PER_CHAPTER, glosses.length);
     
     if (startIdx >= glosses.length) break;
+    
+    const levelNum = i < 5 ? 1 : 2;
+    const chapterInLevel = i < 5 ? i + 1 : i - 4;
     
     const chapterGlosses = glosses.slice(startIdx, endIdx);
     const chapterLessons = chapterGlosses.map((gloss, index) => {
@@ -42,7 +53,7 @@ function createChaptersFromGlosses(glosses: string[]): Chapter[] {
         title: gloss.charAt(0).toUpperCase() + gloss.slice(1), 
         completed: false,
         locked: index !== 0, 
-        id: `level-1-chapter-${i+1}-lesson-${index+1}-${gloss}`,
+        id: `level-${levelNum}-chapter-${chapterInLevel}-lesson-${index+1}-${gloss}`,
         videoSrc: videoSrc,
         duration: 30,
         signData: signData, 
@@ -51,7 +62,7 @@ function createChaptersFromGlosses(glosses: string[]): Chapter[] {
     
     chapters.push({
       id: `chapter-${i+1}`,
-      title: `Chapter ${i+1}`,
+      title: `Chapter ${chapterInLevel}`,
       description: `${chapterLessons.length} sign language lessons`,
       lessons: chapterLessons.length,
       completed: 0,
@@ -75,8 +86,10 @@ export const completeLesson = (levelIndex: number, chapterIndex: number, lessonI
   if (lessonIndex < 0 || lessonIndex >= chapter.lessonList.length) return false;
 
   const lesson = chapter.lessonList[lessonIndex];
-  if (lesson.locked || lesson.completed) return false;
-
+  if (lesson.locked) return false;
+  
+  if (lesson.completed) return true;
+  
   lesson.completed = true;
   chapter.completed += 1;
 
@@ -92,6 +105,9 @@ export const completeLesson = (levelIndex: number, chapterIndex: number, lessonI
   else if (levelIndex + 1 < levels.length) {
     const nextLevel = levels[levelIndex + 1];
     nextLevel.unlocked = true;
+    if (nextLevel.chapters.length > 0 && nextLevel.chapters[0].lessonList.length > 0) {
+      nextLevel.chapters[0].lessonList[0].locked = false;
+    }
   }
 
   return true;
